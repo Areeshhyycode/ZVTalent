@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
   if (status) filter.status = status;
 
   const applications = await Application.find(filter)
+    .select("-resumeUrl -resumeText")
     .populate("jobId", "title team location")
     .sort(sortBy === "aiScore" ? { aiScore: -1 } : { createdAt: -1 });
 
