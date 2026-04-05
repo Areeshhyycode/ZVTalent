@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import Navbar from "@/components/Navbar";
 
 interface Application {
@@ -118,6 +119,16 @@ export default function Dashboard() {
     <>
       <Navbar />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 overflow-x-hidden">
+        {/* Tab Navigation */}
+        <div className="flex gap-6 border-b border-gray-200 mb-8">
+          <span className="pb-3 text-sm font-medium text-black border-b-2 border-black">
+            Applications
+          </span>
+          <Link href="/dashboard/jobs" className="pb-3 text-sm font-medium text-gray-400 hover:text-black transition-colors">
+            Manage Jobs
+          </Link>
+        </div>
+
         <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
         <p className="text-gray-400 mt-1 text-sm sm:text-base">
           AI-powered candidate rankings and management
