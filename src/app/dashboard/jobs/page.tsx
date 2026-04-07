@@ -16,15 +16,48 @@ interface Job {
   createdAt: string;
 }
 
-const emptyJob = {
+const TEAMS = [
+  "Engineering",
+  "Design",
+  "Marketing",
+  "Sales",
+  "Operations",
+  "HR",
+  "Finance",
+  "Product",
+  "Customer Support",
+  "Data Science",
+];
+
+const COMMON_LOCATIONS = [
+  "Karachi",
+  "Lahore",
+  "Islamabad",
+  "Rawalpindi",
+  "Faisalabad",
+  "Multan",
+  "Peshawar",
+  "Remote",
+];
+
+const emptyJob: {
+  title: string;
+  description: string;
+  location: string[];
+  team: string;
+  vacancies: number;
+  workingHours: string;
+  requirements: string[];
+  status: "active" | "closed";
+} = {
   title: "",
   description: "",
-  location: ["Karachi"],
+  location: [],
   team: "",
   vacancies: 1,
   workingHours: "8 hours",
   requirements: [""],
-  status: "active" as const,
+  status: "active",
 };
 
 export default function ManageJobs() {
@@ -36,6 +69,7 @@ export default function ManageJobs() {
   const [saving, setSaving] = useState(false);
   const [authorized, setAuthorized] = useState(false);
   const [locationInput, setLocationInput] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "closed">("all");
 
   useEffect(() => {
     const stored = localStorage.getItem("user");
@@ -47,7 +81,7 @@ export default function ManageJobs() {
   }, []);
 
   const fetchJobs = () => {
-    fetch("/api/jobs")
+    fetch("/api/jobs?all=true")
       .then((r) => r.json())
       .then((data) => { setJobs(data); setLoading(false); })
       .catch(() => setLoading(false));
@@ -152,7 +186,12 @@ export default function ManageJobs() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold">Manage Jobs</h1>
-            <p className="text-gray-400 mt-1 text-sm">{jobs.length} job{jobs.length !== 1 ? "s" : ""} posted</p>
+            <p className="text-gray-400 mt-1 text-sm">
+              {jobs.length} job{jobs.length !== 1 ? "s" : ""} posted
+              {jobs.filter((j) => j.status === "active").length > 0 && (
+                <span> &middot; {jobs.filter((j) => j.status === "active").length} active</span>
+              )}
+            </p>
           </div>
           <button
             onClick={openCreate}
@@ -162,8 +201,27 @@ export default function ManageJobs() {
           </button>
         </div>
 
+        {/* Status Filter */}
+        {jobs.length > 0 && (
+          <div className="flex gap-2 mt-4">
+            {(["all", "active", "closed"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                className={`text-xs px-4 py-2 rounded-full border transition-colors ${
+                  statusFilter === s
+                    ? "bg-black text-white border-black"
+                    : "border-gray-200 text-gray-500 hover:border-gray-400"
+                }`}
+              >
+                {s === "all" ? "All" : s === "active" ? "Active" : "Closed"}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Jobs List */}
-        <div className="mt-6 space-y-3">
+        <div className="mt-4 space-y-3">
           {loading ? (
             [...Array(3)].map((_, i) => (
               <div key={i} className="border border-gray-200 rounded-lg p-5 animate-pulse">
@@ -179,7 +237,7 @@ export default function ManageJobs() {
               </button>
             </div>
           ) : (
-            jobs.map((job) => (
+            jobs.filter((j) => statusFilter === "all" || j.status === statusFilter).map((job) => (
               <div key={job._id} className="border border-gray-200 rounded-lg p-4 sm:p-5 hover:border-gray-300 transition-colors">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="min-w-0">
@@ -254,13 +312,42 @@ export default function ManageJobs() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm text-gray-500">Team *</label>
-                    <input
-                      type="text"
-                      value={form.team}
-                      onChange={(e) => setForm({ ...form, team: e.target.value })}
-                      placeholder="e.g. Engineering"
-                      className="w-full mt-1 py-3 border-b border-gray-200 focus:border-black outline-none transition-colors"
-                    />
+                    <select
+                      value={TEAMS.includes(form.team) ? form.team : "__custom"}
+                      onChange={(e) => {
+                        if (e.target.value === "__custom") {
+                          setForm({ ...form, team: "" });
+                        } else {
+                          setForm({ ...form, team: e.target.value });
+                        }
+                      }}
+                      className="w-full mt-1 py-3 border-b border-gray-200 focus:border-black outline-none bg-transparent cursor-pointer"
+                    >
+                      <option value="" disabled>Select team</option>
+                      {TEAMS.map((t) => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                      <option value="__custom">Other (custom)</option>
+                    </select>
+                    {!TEAMS.includes(form.team) && form.team !== "" && (
+                      <input
+                        type="text"
+                        value={form.team}
+                        onChange={(e) => setForm({ ...form, team: e.target.value })}
+                        placeholder="Enter custom team name"
+                        className="w-full mt-2 py-2 border-b border-gray-200 focus:border-black outline-none text-sm"
+                      />
+                    )}
+                    {!TEAMS.includes(form.team) && form.team === "" && (
+                      <input
+                        type="text"
+                        value={form.team}
+                        onChange={(e) => setForm({ ...form, team: e.target.value })}
+                        placeholder="Enter custom team name"
+                        className="w-full mt-2 py-2 border-b border-gray-200 focus:border-black outline-none text-sm"
+                        autoFocus
+                      />
+                    )}
                   </div>
                   <div>
                     <label className="text-sm text-gray-500">Vacancies</label>
@@ -302,24 +389,41 @@ export default function ManageJobs() {
                 {/* Locations */}
                 <div>
                   <label className="text-sm text-gray-500">Locations</label>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {form.location.map((loc) => (
-                      <span key={loc} className="flex items-center gap-1 text-xs bg-gray-100 px-3 py-1.5 rounded-full">
-                        {loc}
-                        <button onClick={() => removeLocation(loc)} className="text-gray-400 hover:text-black ml-1">&times;</button>
-                      </span>
+                  {/* Selected locations */}
+                  {form.location.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {form.location.map((loc) => (
+                        <span key={loc} className="flex items-center gap-1 text-xs bg-black text-white px-3 py-1.5 rounded-full">
+                          {loc}
+                          <button onClick={() => removeLocation(loc)} className="text-gray-300 hover:text-white ml-1">&times;</button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {/* Quick-add common locations */}
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {COMMON_LOCATIONS.filter((loc) => !form.location.includes(loc)).map((loc) => (
+                      <button
+                        key={loc}
+                        type="button"
+                        onClick={() => setForm({ ...form, location: [...form.location, loc] })}
+                        className="text-xs px-3 py-1.5 border border-gray-200 rounded-full hover:border-black hover:bg-black hover:text-white transition-colors"
+                      >
+                        + {loc}
+                      </button>
                     ))}
                   </div>
+                  {/* Custom location input */}
                   <div className="flex gap-2 mt-2">
                     <input
                       type="text"
                       value={locationInput}
                       onChange={(e) => setLocationInput(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addLocation())}
-                      placeholder="Add city..."
+                      placeholder="Add custom city..."
                       className="flex-1 py-2 border-b border-gray-200 focus:border-black outline-none text-sm"
                     />
-                    <button onClick={addLocation} className="text-xs px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">Add</button>
+                    <button onClick={addLocation} type="button" className="text-xs px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">Add</button>
                   </div>
                 </div>
 

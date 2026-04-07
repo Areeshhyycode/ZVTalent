@@ -3,9 +3,12 @@ import dbConnect from "@/lib/mongodb";
 import Job from "@/models/Job";
 
 // GET all jobs
-export async function GET() {
+export async function GET(req: NextRequest) {
   await dbConnect();
-  const jobs = await Job.find({ status: "active" }).sort({ createdAt: -1 });
+  const { searchParams } = new URL(req.url);
+  const all = searchParams.get("all") === "true";
+  const filter = all ? {} : { status: "active" };
+  const jobs = await Job.find(filter).sort({ createdAt: -1 });
   return NextResponse.json(jobs);
 }
 

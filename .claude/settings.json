@@ -4,7 +4,8 @@
       "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm)",
       "Read(//c/Users/xoxom/OneDrive/Desktop/**)",
       "Bash(npx create-next-app@latest hrgenie --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npx next:*)"
     ]
   }
 }
